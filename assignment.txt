@@ -1,0 +1,89 @@
+E0255 (2020)
+
+ASSIGNMENT 2
+
+Deadline: May 22, 2020 5pm.
+
+This assignment is available at
+https://www.csa.iisc.ac.in/~udayb/e0255/2020/asst-2.txt
+Instead of storing a copy of this file, please check at this URL in case there
+are updates or clarifications.
+
+DESCRIPTION
+
+Develop a loop interchange pass in MLIR driven by an analytical cost model that
+optimizes for locality (spatial, temporal - both self and group) and parallelism
+for multicores (so as to minimize the frequence of synchronization). The pass
+should be implemented on the Affine dialect in MLIR, which ensures a certain
+structure to the loads, stores, and loop bounds that facilitate dependence
+analysis and easy transformation. The pass should be able to handle both
+perfectly nested loop nests and imperfectly nested ones. The pass does not need
+to perform interchange in the presence of if conditionals and non-rectangular
+loop nests, but should still handle them by detecting those and bailing out,
+i.e., it should not crash or abort/assert on any input. You are free to make use
+of any existing infrastructure in MLIR to build this pass.
+
+The pass should be  triggered by the command line flag -affine-loop-interchange.
+Test cases specifying the input and output IR, which could be automatically
+tested via FileCheck are provided here: 
+https://www.csa.iisc.ac.in/~udayb/e0255/2020/interchange.mlir
+
+# Can be tested by simply running to see if it passes.
+$ llvm-lit -sv interchange.mlir
+
+Your pass shouldn't require any additional command line flags for validation on
+the provided test cases. (You are free to have additional flags for your own
+debugging purposes.)
+
+You should use the git version of LLVM project as of commit id
+4ba7ae85da314e3f14a5bf26bf80dc29410b3e71 as the base version. Please clone from
+https://github.com/llvm/llvm-project at that commit
+id.
+
+Simple example:
+
+Input IR snippet:
+
+  affine.for %i = 0 to %N {
+    affine.for %j = 0 to %M {
+      %v = affine.load %A[%j, %i] : memref<?x?xf32>
+      %vd = addf %v, %v : f32
+      affine.store %vd, %A[%j, %i] : memref<?x?xf32>
+    }
+  }
+
+Output IR snippet:
+
+  affine.for %i = 0 to %M {
+    affine.for %j = 0 to %N {
+      %v = affine.load %A[%i, %j] : memref<?x?xf32>
+      %vd = addf %v, %v : f32
+      affine.store %vd, %A[%i, %j] : memref<?x?xf32>
+    }
+  }
+
+WHAT TO SUBMIT
+
+Please submit your assignment as a single git commit patch file that should
+apply on the base version along with a README.txt. Once you have created a
+single commit to contain your implementation, such a patch can be generated
+using:
+
+$ git format-patch HEAD~
+
+The README.txt can include any short notes or observations you
+made or to document any limitations of your implementation that make it fall
+short of the assignment requirements. Please make sure you use the same coding
+style as the rest of MLIR. Automatic formatting can be performed using
+clang-format (or via git clang-format HEAD~ once committed).
+
+Both files should be emailed to udayb@iisc.ac.in with a CC to
+kingshukm@iisc.ac.in by the deadline mentioned on the top. We recommend using
+the CSA clserv server if your Internet connection is good.
+
+REFERENCES
+
+MLIR documentation: https://mlir.llvm.org
+Doxygen documentation is also available at the above site (click Source >
+Doxygen) from the menu bar on the top.
+
